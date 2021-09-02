@@ -2,9 +2,12 @@
 
 import sys
 import argparse
-import invoiced 
+import invoiced
+import pandas
 
 from math import ceil
+from obfuscation import CustomerObfuscater
+from invoice_mapping import InvoicedCustomerToBillingCustomer
 
 def main(arguments):
 
@@ -17,7 +20,14 @@ def main(arguments):
     client = invoiced.Client(args.api_key)
 
     data_list = pull_paginated_rows(client)
-    print(data_list)
+    process(data_list)
+
+def process(data_list):
+    obfuscated = CustomerObfuscater.Process(data_list)
+    mapped = [InvoicedCustomerToBillingCustomer(customer) for customer in obfuscated]
+    print(mapped)
+    # TODO: Pull this from args?
+    pandas.DataFrame(mapped).to_csv(r"c:\temp\out.csv", index=False)
 
 def pull_paginated_rows(client):
     max_per_page = 100
